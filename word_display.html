@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Display - Essay Reader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a1a;
+            color: #fff;
+            display: flex;
+            height: 100vh;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .controls-panel {
+            width: 300px;
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .controls-panel h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #4CAF50;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            background-color: #3a3a3a;
+            color: #fff;
+            border: 1px solid #4CAF50;
+            border-radius: 4px;
+            font-family: 'Arial', sans-serif;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #66BB6A;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+
+        input[type="number"] {
+            padding: 8px;
+            background-color: #3a3a3a;
+            color: #fff;
+            border: 1px solid #4CAF50;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #66BB6A;
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #66BB6A;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.stop {
+            background-color: #f44336;
+        }
+
+        button.stop:hover {
+            background-color: #da190b;
+        }
+
+        button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .display-area {
+            flex: 1;
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            min-height: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .word-display {
+            font-size: 72px;
+            color: #fff;
+            text-align: center;
+            font-weight: bold;
+            letter-spacing: 2px;
+            max-width: 90%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in-out;
+            font-family: 'Courier New', monospace;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .progress-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .status-message {
+            padding: 10px;
+            background-color: #3a3a3a;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #aaa;
+            text-align: center;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .container {
+                flex-direction: column;
+            }
+
+            .controls-panel {
+                width: 100%;
+                max-height: 300px;
+            }
+
+            .word-display {
+                font-size: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls-panel">
+            <h2>📖 Essay Reader</h2>
+            
+            <div>
+                <label for="essayInput">Paste your essay here:</label>
+                <textarea id="essayInput" placeholder="Enter your essay text..."></textarea>
+            </div>
+
+            <div class="input-group">
+                <label for="wordSpeed">Words Per Second:</label>
+                <input type="number" id="wordSpeed" value="1" min="0.1" max="10" step="0.1">
+            </div>
+
+            <div class="buttons">
+                <button id="startBtn" onclick="startReading()">▶ Start Reading</button>
+                <button id="pauseBtn" onclick="pauseReading()" disabled>⏸ Pause</button>
+                <button id="resumeBtn" onclick="resumeReading()" disabled style="display: none;">▶ Resume</button>
+                <button class="stop" id="stopBtn" onclick="stopReading()" disabled>⏹ Stop</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">Ready to start</div>
+            <div class="status-message" style="background-color: #1a1a1a; border: 1px solid #4CAF50; min-height: auto;">
+                <span style="font-size: 11px; color: #aaa;">Total Time: </span>
+                <span id="totalTime" style="font-size: 14px; color: #4CAF50; font-weight: bold;">--:--</span>
+            </div>
+        </div>
+
+        <div class="display-area">
+            <div id="wordContainer" style="text-align: center; position: relative; width: 100%;">
+                <div class="word-display" id="wordDisplay">Ready to start</div>
+                <div class="progress-info" id="progressInfo"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let words = [];
+        let currentWordIndex = 0;
+        let isReading = false;
+        let isPaused = false;
+        let currentTimeout = null;
+
+        function getWords() {
+            const essay = document.getElementById('essayInput').value.trim();
+            if (!essay) {
+                showStatus('Please enter an essay first');
+                return [];
+            }
+            return essay.match(/\b[\w'-]+\b/g) || [];
+        }
+
+        function updateTotalTime() {
+            const words = getWords();
+            const wordsPerSecond = parseFloat(document.getElementById('wordSpeed').value);
+            if (words.length === 0) {
+                document.getElementById('totalTime').textContent = '--:--';
+                return;
+            }
+            const totalSeconds = words.length / wordsPerSecond;
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = Math.round(totalSeconds % 60);
+            document.getElementById('totalTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function showStatus(message) {
+            document.getElementById('statusMessage').textContent = message;
+        }
+
+        function updateProgress() {
+            const total = words.length;
+            if (total > 0) {
+                const percentage = Math.round((currentWordIndex / total) * 100);
+                document.getElementById('progressInfo').textContent = `${currentWordIndex} / ${total} (${percentage}%)`;
+            }
+        }
+
+        function displayWord() {
+            if (currentWordIndex < words.length) {
+                const word = words[currentWordIndex];
+                const wordDisplay = document.getElementById('wordDisplay');
+                
+                // Color the central letter red
+                const centerIndex = Math.floor(word.length / 2);
+                let displayHTML = '';
+                for (let i = 0; i < word.length; i++) {
+                    if (i === centerIndex) {
+                        displayHTML += `<span style="color: #ff4444;">${word[i]}</span>`;
+                    } else {
+                        displayHTML += word[i];
+                    }
+                }
+                wordDisplay.innerHTML = displayHTML;
+                updateProgress();
+                
+                const wordsPerSecond = parseFloat(document.getElementById('wordSpeed').value);
+                const duration = 1000 / wordsPerSecond;
+                currentTimeout = setTimeout(() => {
+                    currentWordIndex++;
+                    if (currentWordIndex < words.length && isReading) {
+                        displayWord();
+                    } else if (currentWordIndex >= words.length && isReading) {
+                        finishReading();
+                    }
+                }, duration);
+            }
+        }
+
+        function startReading() {
+            words = getWords();
+            if (words.length === 0) return;
+
+            isReading = true;
+            isPaused = false;
+            currentWordIndex = 0;
+
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = false;
+            showStatus('Reading in progress...');
+            updateTotalTime();
+
+            displayWord();
+        }
+
+        function pauseReading() {
+            if (isReading && !isPaused) {
+                isPaused = true;
+                clearTimeout(currentTimeout);
+                
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('resumeBtn').style.display = 'block';
+                showStatus('Paused - Click Resume to continue');
+            }
+        }
+
+        function resumeReading() {
+            if (isPaused) {
+                isPaused = false;
+                
+                document.getElementById('pauseBtn').style.display = 'block';
+                document.getElementById('resumeBtn').style.display = 'none';
+                showStatus('Reading in progress...');
+                
+                currentWordIndex++;
+                displayWord();
+            }
+        }
+
+        function stopReading() {
+            clearTimeout(currentTimeout);
+            isReading = false;
+            isPaused = false;
+            currentWordIndex = 0;
+
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('pauseBtn').style.display = 'block';
+            document.getElementById('resumeBtn').style.display = 'none';
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('wordDisplay').innerHTML = 'Ready to start';
+            document.getElementById('progressInfo').textContent = '';
+            showStatus('Ready to start');
+        }
+
+        function finishReading() {
+            isReading = false;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('wordDisplay').innerHTML = '✓ Done!';
+            showStatus('Essay completed!');
+        }
+
+        // Set example text
+        document.getElementById('essayInput').placeholder = 'Example: "Paste your essay here. Each word will appear one at a time on the black background."';
+        
+        // Update total time when essay or speed changes
+        document.getElementById('essayInput').addEventListener('input', updateTotalTime);
+        document.getElementById('wordSpeed').addEventListener('input', updateTotalTime);
+        
+        // Initialize total time display
+        updateTotalTime();
+    </script>
+</body>
+</html>
